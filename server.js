@@ -16,23 +16,26 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 
 app.get('/data', (req, res) => {
-  res.json({ message: 'Hello from the backend!' });
+  pool.query('SELECT * FROM user_details', (err, result) => {
+    if (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Failed to fetch data' });
+    } else {
+      res.json({ message: 'Data fetched successfully', data: result.rows });
+    }
+})});
+
+app.post('/data', (req, res) => {
+  const { name, email } = req.body;
+  pool.query('INSERT INTO user_details (name, email) VALUES ($1, $2)', [name, email], (err, result) => {
+    if (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Failed to insert data' });
+    } else {
+      res.json({ message: 'Data inserted successfully' });
+    }
+  });
 });
-
-async function createTable() {
-  try {
-    await pool.query(`CREATE TABLE IF NOT EXISTS user_details (
-      id SERIAL PRIMARY KEY,
-      name VARCHAR(100),
-      email VARCHAR(100)
-    )`);                        // เอาคำว่า "query" ออก
-    console.log('Table created successfully');
-  } catch (err) {
-    console.error('Error creating table:', err);
-  }
-}
-
-createTable();
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
